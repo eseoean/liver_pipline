@@ -46,6 +46,16 @@
 - DL: ResidualMLP, TabNet
 - 최종 ranking source: GroupCV top3 weighted ensemble
 
+## 성능 해석
+
+최종 LIHC/HCC 입력셋의 GroupCV weighted ensemble은 Spearman `0.5158`, RMSE `2.1912`였다. RandomCV의 주력 모델은 Spearman `0.81-0.84` 수준까지 올라가므로, 모델이 반응 패턴 자체를 못 배우는 것은 아니다. 다만 drug holdout GroupCV에서는 새 약물 일반화 성능이 BRCA/lung 기준보다 낮다.
+
+이 차이가 간암의 작은 supervised label 규모에서 오는지 확인하기 위해 BRCA exact slim + strong context + SMILES 입력을 15개 cell line으로 downsample해 같은 모델군으로 재평가했다. BRCA full 29개 cell line의 GroupCV ensemble Spearman은 `0.5836`이었고, 15개 cell line으로 줄이면 `0.5428`로 낮아졌다. 이는 LIHC/HCC의 `0.5158`에 가까워지는 결과다.
+
+따라서 간암 성능 하락은 파이프라인 실패라기보다 제한된 LIHC/HCC cell line 수와 pair 다양성 부족의 영향을 크게 받는 것으로 해석한다. 다만 BRCA 15개 subset이 여전히 간암보다 약간 높으므로, HCC cell-line 대표성, label noise, target-response signal sparsity, TCGA-LIHC context와 GDSC cell-line response 간 mismatch도 함께 작용할 가능성이 높다.
+
+상세 비교 문서: `docs/liver_performance_gap_analysis_20260421.md`
+
 ## 최종 후보 산출
 
 모델 OOF prediction은 낮은 `ln_IC50`를 높은 sensitivity로 해석한다. 약물별로 평균 예측값, sample 내 top-k 진입률, 관측 IC50, error, coverage를 집계해 최종 score를 만들었다. 이후 drug name 기준으로 중복 screening ID를 collapse하고, top50 후보에 ADMET gate를 적용했다.

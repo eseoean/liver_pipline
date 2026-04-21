@@ -18,6 +18,8 @@ python3 scripts/run_liver_pipeline.py --stage all
 - `data/processed/slim_inputs/`: 모델 입력용 slim numeric table, `X.npy`, `y.npy`, feature names
 - `outputs/model_runs/`: GroupCV/random CV 모델 성능 및 OOF prediction
 - `outputs/final_selection/`: 약물 랭킹, ADMET 필터링, 최종 HTML/Markdown 보고서
+- `docs/liver_performance_gap_analysis_20260421.md`: BRCA 15-cell-line downsample 기반 간암 성능 하락 해석
+- `outputs/reports/performance_gap_brca_downsample_20260421.json`: 간암/BRCA downsample 비교 요약 JSON
 
 ## 현재 설계
 

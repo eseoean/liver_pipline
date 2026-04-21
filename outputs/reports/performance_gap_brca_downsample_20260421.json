@@ -1,0 +1,72 @@
+{
+  "analysis": "liver_vs_brca_cell_line_downsample_groupcv",
+  "generated_at": "2026-04-21",
+  "liver_final": {
+    "input_family": "numeric_slim_strong_context_onehot_smiles_svd",
+    "cell_lines": 15,
+    "pairs": 3396,
+    "drugs": 243,
+    "features": 4998,
+    "strong_context_onehot_features": 32,
+    "smiles_svd_features": 64,
+    "groupcv_weighted_ensemble": {
+      "spearman": 0.5158283260401216,
+      "rmse": 2.1911573081641342
+    }
+  },
+  "brca_full_liverlike_models": {
+    "input_family": "exact_slim_strong_context_smiles",
+    "cell_lines": 29,
+    "pairs": 6366,
+    "drugs": 243,
+    "features": 5625,
+    "groupcv_weighted_ensemble": {
+      "spearman": 0.5836487661204834,
+      "rmse": 2.114354677161848
+    }
+  },
+  "brca_downsample_15_cell_lines": {
+    "selection_rule": "top 15 BRCA cell lines by available pair count; deterministic tie-break by sample_id",
+    "cell_lines": 15,
+    "pairs": 3475,
+    "drugs": 233,
+    "features": 5625,
+    "selected_cell_lines": [
+      "BT-549",
+      "CAMA-1",
+      "EFM-19",
+      "HCC38",
+      "HCC70",
+      "MDA-MB-157",
+      "MDA-MB-231",
+      "MDA-MB-436",
+      "MDA-MB-453",
+      "MFM-223",
+      "CAL-120",
+      "CAL-51",
+      "HCC1428",
+      "HCC1937",
+      "HCC1954"
+    ],
+    "groupcv_weighted_ensemble": {
+      "spearman": 0.542765270020511,
+      "rmse": 2.2406413100326006
+    }
+  },
+  "interpretation": {
+    "main_conclusion": "Limited LIHC/HCC supervised response diversity substantially contributes to the liver performance gap, but does not fully explain it.",
+    "evidence": "BRCA GroupCV Spearman dropped from 0.5836 to 0.5428 when downsampled from 29 to 15 cell lines, approaching the LIHC/HCC result of 0.5158.",
+    "residual_factors": [
+      "HCC cell-line representativeness",
+      "liver-specific label noise",
+      "weaker or sparser target-response signal",
+      "mismatch between TCGA-LIHC context and GDSC cell-line response"
+    ]
+  },
+  "source_artifacts": {
+    "liver_metrics": "outputs/model_runs/metrics_summary.json",
+    "liver_qc": "outputs/reports/quality_check_results.json",
+    "brca_downsample_summary": "/Users/skku_aws2_18/lung/artifacts/brca_downsample_15cell_groupcv_20260421/summary.json",
+    "brca_full_summary": "/Users/skku_aws2_18/lung/artifacts/brca_full_liverlike_groupcv_20260421/summary.json"
+  }
+}
