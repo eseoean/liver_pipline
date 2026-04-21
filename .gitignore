@@ -1,0 +1,12 @@
+__pycache__/
+.DS_Store
+.pytest_cache/
+.venv/
+
+# Local data/cache artifacts are reproducible from S3 and can be large.
+data/raw_cache/
+data/interim/
+data/processed/
+
+# Keep generated outputs local/S3 unless explicitly selected for Git.
+outputs/tmp/

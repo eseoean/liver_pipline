@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>LIHC/HCC Drug Repurposing Pipeline Report</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 32px; color: #17202a; }
+    h1, h2 { color: #173f35; }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 12px; }
+    .card { background: #f2f7f1; border: 1px solid #c8dec7; border-radius: 12px; padding: 14px; }
+    .label { color: #5f6f64; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0 28px; font-size: 14px; }
+    th, td { border-bottom: 1px solid #d9e3dc; padding: 9px; text-align: left; }
+    th { background: #e7f0e5; }
+    .note { background: #fff8dc; border-left: 4px solid #d9a441; padding: 12px; }
+  </style>
+</head>
+<body>
+  <h1>LIHC/HCC Drug Repurposing Pipeline Report</h1>
+  <p class="note">This report is generated from the liver-specific pipeline using GDSC2 LIHC/HCC labels, DepMap CRISPR, drug SMILES, LINCS signatures, and TCGA-LIHC disease context.</p>
+  <h2>Input Summary</h2>
+  <div class="cards">
+    <div class="card"><div class="label">GDSC rows</div><div class="value">4164</div></div>
+    <div class="card"><div class="label">Cell lines</div><div class="value">15</div></div>
+    <div class="card"><div class="label">Drugs</div><div class="value">295</div></div>
+    <div class="card"><div class="label">Slim features</div><div class="value">4902</div></div>
+  </div>
+  <h2>Model Metrics</h2>
+  <table><thead><tr><th>Track</th><th>Spearman</th><th>RMSE</th></tr></thead><tbody>['<tr><td>groupcv__lightgbm</td><td>0.4941</td><td>2.3357</td></tr>', '<tr><td>groupcv__xgboost</td><td>0.5091</td><td>2.2492</td></tr>', '<tr><td>groupcv__residual_mlp</td><td>0.4575</td><td>2.2957</td></tr>', '<tr><td>groupcv__tabnet</td><td>0.0893</td><td>2.6119</td></tr>', '<tr><td>randomcv__lightgbm</td><td>0.8448</td><td>1.1780</td></tr>', '<tr><td>randomcv__xgboost</td><td>0.8362</td><td>1.2118</td></tr>', '<tr><td>randomcv__residual_mlp</td><td>0.8003</td><td>1.3342</td></tr>', '<tr><td>randomcv__tabnet</td><td>0.0819</td><td>2.5848</td></tr>', '<tr><td><b>groupcv weighted top3 ensemble</b></td><td>0.5270</td><td>2.2076</td></tr>']</tbody></table>
+  <h2>Top Ranked Drugs</h2>
+  <table><thead><tr><th>Rank</th><th>Drug</th><th>Liver relevance</th><th>Score</th><th>Mean pred</th><th>Top20 rate</th></tr></thead><tbody><tr><td>1</td><td>Paclitaxel</td><td>liver_cancer_research_or_related</td><td>0.9476</td><td>-0.9482</td><td>1.000</td></tr><tr><td>2</td><td>Epirubicin</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.9239</td><td>0.3426</td><td>0.933</td></tr><tr><td>3</td><td>Docetaxel</td><td>liver_cancer_research_or_related</td><td>0.9237</td><td>-2.4290</td><td>1.000</td></tr><tr><td>4</td><td>Bortezomib</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.9060</td><td>0.3883</td><td>1.000</td></tr><tr><td>5</td><td>Topotecan</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.9022</td><td>-0.8843</td><td>1.000</td></tr><tr><td>6</td><td>Camptothecin</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8974</td><td>0.5214</td><td>0.933</td></tr><tr><td>7</td><td>Temsirolimus</td><td>liver_cancer_research_or_related</td><td>0.8962</td><td>-0.8326</td><td>1.000</td></tr><tr><td>8</td><td>Dactinomycin</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8957</td><td>0.6406</td><td>1.000</td></tr><tr><td>9</td><td>Elesclomol</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8956</td><td>-1.2174</td><td>1.000</td></tr><tr><td>10</td><td>Teniposide</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8890</td><td>0.6178</td><td>1.000</td></tr><tr><td>11</td><td>Mitoxantrone</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8886</td><td>0.0557</td><td>1.000</td></tr><tr><td>12</td><td>Pevonedistat</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8674</td><td>0.6123</td><td>1.000</td></tr><tr><td>13</td><td>Bleomycin</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8413</td><td>1.0975</td><td>0.933</td></tr><tr><td>14</td><td>Lestaurtinib</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8081</td><td>1.1819</td><td>0.733</td></tr><tr><td>15</td><td>MK-2206</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.8065</td><td>1.2128</td><td>0.733</td></tr><tr><td>16</td><td>Staurosporine</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.7949</td><td>1.2752</td><td>0.800</td></tr><tr><td>17</td><td>Buparlisib</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.7948</td><td>1.9233</td><td>0.067</td></tr><tr><td>18</td><td>MG-132</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.7873</td><td>1.3513</td><td>0.667</td></tr><tr><td>19</td><td>BIBR-1532</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.7764</td><td>0.4396</td><td>1.000</td></tr><tr><td>20</td><td>Tanespimycin</td><td>repurposing_candidate_unclear_liver_relation</td><td>0.7758</td><td>1.8309</td><td>0.067</td></tr></tbody></table>
+  <h2>ADMET Gate</h2>
+  <table><thead><tr><th>Drug</th><th>Gate</th><th>ADMET-adjusted score</th><th>Lipinski violations</th><th>PAINS alerts</th></tr></thead><tbody><tr><td>Camptothecin</td><td>PASS</td><td>0.8974</td><td>0</td><td>0</td></tr><tr><td>Elesclomol</td><td>PASS</td><td>0.8956</td><td>0</td><td>0</td></tr><tr><td>Pevonedistat</td><td>PASS</td><td>0.8674</td><td>0</td><td>0</td></tr><tr><td>Lestaurtinib</td><td>PASS</td><td>0.8081</td><td>0</td><td>0</td></tr><tr><td>MK-2206</td><td>PASS</td><td>0.8065</td><td>0</td><td>0</td></tr><tr><td>Staurosporine</td><td>PASS</td><td>0.7949</td><td>0</td><td>0</td></tr><tr><td>Buparlisib</td><td>PASS</td><td>0.7948</td><td>0</td><td>0</td></tr><tr><td>MG-132</td><td>PASS</td><td>0.7873</td><td>0</td><td>0</td></tr><tr><td>BIBR-1532</td><td>PASS</td><td>0.7764</td><td>0</td><td>0</td></tr><tr><td>SN-38</td><td>PASS</td><td>0.7751</td><td>0</td><td>0</td></tr><tr><td>Entinostat</td><td>PASS</td><td>0.7452</td><td>0</td><td>0</td></tr><tr><td>GDC0810</td><td>PASS</td><td>0.7226</td><td>1</td><td>0</td></tr><tr><td>Alisertib</td><td>PASS</td><td>0.6823</td><td>2</td><td>0</td></tr><tr><td>Vinblastine</td><td>PASS</td><td>0.6808</td><td>2</td><td>0</td></tr><tr><td>IOX2</td><td>PASS</td><td>0.6710</td><td>0</td><td>0</td></tr><tr><td>Tozasertib</td><td>PASS</td><td>0.6689</td><td>0</td><td>0</td></tr><tr><td>Dihydrorotenone</td><td>PASS</td><td>0.6598</td><td>0</td><td>0</td></tr><tr><td>Irinotecan</td><td>PASS</td><td>0.6468</td><td>1</td><td>0</td></tr><tr><td>ABT737</td><td>PASS</td><td>0.6362</td><td>2</td><td>0</td></tr><tr><td>BX795</td><td>PASS</td><td>0.6351</td><td>1</td><td>0</td></tr></tbody></table>
+</body>
+</html>
