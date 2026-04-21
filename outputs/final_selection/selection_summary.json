@@ -8,80 +8,80 @@
       "final_rank": 1,
       "drug_name": "Paclitaxel",
       "canonical_drug_id": "1080",
-      "final_selection_score": 0.9476239669421487,
-      "mean_y_pred": -0.9481848478317261,
+      "final_selection_score": 0.9442148760330578,
+      "mean_y_pred": -0.641095757484436,
       "pred_top20_rate": 1.0
     },
     {
       "final_rank": 2,
       "drug_name": "Epirubicin",
       "canonical_drug_id": "1511",
-      "final_selection_score": 0.9238636363636364,
-      "mean_y_pred": 0.34256088733673096,
+      "final_selection_score": 0.9298553719008263,
+      "mean_y_pred": 0.2486022561788559,
       "pred_top20_rate": 0.9333333333333333
     },
     {
       "final_rank": 3,
       "drug_name": "Docetaxel",
       "canonical_drug_id": "1819",
-      "final_selection_score": 0.9236570247933883,
-      "mean_y_pred": -2.4290170669555664,
+      "final_selection_score": 0.9247933884297521,
+      "mean_y_pred": -2.7237348556518555,
       "pred_top20_rate": 1.0
     },
     {
       "final_rank": 4,
-      "drug_name": "Bortezomib",
-      "canonical_drug_id": "1191",
-      "final_selection_score": 0.90599173553719,
-      "mean_y_pred": 0.38825610280036926,
+      "drug_name": "MG-132",
+      "canonical_drug_id": "1862",
+      "final_selection_score": 0.9233471074380166,
+      "mean_y_pred": 0.389591246843338,
       "pred_top20_rate": 1.0
     },
     {
       "final_rank": 5,
       "drug_name": "Topotecan",
       "canonical_drug_id": "1808",
-      "final_selection_score": 0.9021694214876033,
-      "mean_y_pred": -0.8842976093292236,
+      "final_selection_score": 0.9140495867768595,
+      "mean_y_pred": 0.15622808039188385,
       "pred_top20_rate": 1.0
     },
     {
       "final_rank": 6,
-      "drug_name": "Camptothecin",
-      "canonical_drug_id": "1003",
-      "final_selection_score": 0.8974173553719008,
-      "mean_y_pred": 0.521430253982544,
-      "pred_top20_rate": 0.9333333333333333
+      "drug_name": "Bortezomib",
+      "canonical_drug_id": "1191",
+      "final_selection_score": 0.9125000000000001,
+      "mean_y_pred": 0.234620600938797,
+      "pred_top20_rate": 1.0
     },
     {
       "final_rank": 7,
       "drug_name": "Temsirolimus",
       "canonical_drug_id": "1016",
-      "final_selection_score": 0.8961776859504131,
-      "mean_y_pred": -0.8325860500335693,
+      "final_selection_score": 0.903512396694215,
+      "mean_y_pred": -1.3223755359649658,
       "pred_top20_rate": 1.0
     },
     {
       "final_rank": 8,
-      "drug_name": "Dactinomycin",
-      "canonical_drug_id": "1911",
-      "final_selection_score": 0.8956611570247933,
-      "mean_y_pred": 0.6405872702598572,
-      "pred_top20_rate": 1.0
+      "drug_name": "Buparlisib",
+      "canonical_drug_id": "1873",
+      "final_selection_score": 0.9022727272727272,
+      "mean_y_pred": 0.9734735488891602,
+      "pred_top20_rate": 0.8
     },
     {
       "final_rank": 9,
       "drug_name": "Elesclomol",
       "canonical_drug_id": "1031",
-      "final_selection_score": 0.8955578512396694,
-      "mean_y_pred": -1.2173901796340942,
+      "final_selection_score": 0.8966942148760331,
+      "mean_y_pred": -0.8790215849876404,
       "pred_top20_rate": 1.0
     },
     {
       "final_rank": 10,
-      "drug_name": "Teniposide",
-      "canonical_drug_id": "1809",
-      "final_selection_score": 0.8890495867768595,
-      "mean_y_pred": 0.6178363561630249,
+      "drug_name": "Mitoxantrone",
+      "canonical_drug_id": "1810",
+      "final_selection_score": 0.8910123966942148,
+      "mean_y_pred": 0.576659083366394,
       "pred_top20_rate": 1.0
     }
   ],

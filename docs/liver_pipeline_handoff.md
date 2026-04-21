@@ -23,13 +23,17 @@
 5. TCGA-LIHC `HiSeqV2` expression matrix에서 tumor sample 373개와 normal sample 50개를 분리해 tumor-normal disease signature를 만든다.
 6. LINCS drug signature와 TCGA-LIHC disease signature의 overlap을 이용해 LINCS reversal score를 pair feature로 만든다.
 7. RDKit Morgan fingerprint와 descriptor를 drug block에 추가한다.
-8. `sample + drug + pair` feature를 합쳐 full train table을 만들고, CRISPR/LINCS/Morgan block을 slim selection하여 약 5천 개 컬럼 입력셋을 만든다.
+8. 폐암 최종 입력셋과 맞추기 위해 `TCGA_DESC`, `PATHWAY_NAME_NORMALIZED`, `classification`, `drug_bridge_strength`, `stage3_resolution_status`를 strong context one-hot feature로 추가한다.
+9. canonical SMILES 문자열은 character n-gram TF-IDF로 변환한 뒤 64차원 TruncatedSVD feature로 압축해 numeric input에 추가한다.
+10. `sample + drug + pair + strong context + SMILES SVD` feature를 합쳐 full train table을 만들고, CRISPR/LINCS/Morgan block을 slim selection하여 약 5천 개 컬럼 입력셋을 만든다.
 
 ## 현재 산출물 요약
 
-- Full train table: `4164 rows x 6398 columns`
-- Slim train table: `3396 rows x 4914 columns`
-- Numeric model features: `4902`
+- Full train table: `4164 rows x 6499 columns`
+- Slim train table: `3396 rows x 5011 columns`
+- Numeric model features: `4998`
+- Strong context one-hot features: `32`
+- SMILES SVD features: `64`
 - 최종 모델 입력 약물: `243`
 - 최종 모델 입력 cell line: `15`
 - SMILES 없는 약물에서 제거된 pair: `768`
@@ -63,4 +67,3 @@ S3 업로드까지 포함하려면 다음을 사용한다.
 ```bash
 python3 scripts/run_liver_pipeline.py --stage all --upload-s3
 ```
-

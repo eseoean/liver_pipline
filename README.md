@@ -24,8 +24,9 @@ python3 scripts/run_liver_pipeline.py --stage all
 - Label: GDSC2 LIHC/HCC cell line-drug `ln_IC50`
 - Sample block: DepMap CRISPRGeneEffect에서 간암 cell line별 dependency feature
 - Drug block: DrugBank/ChEMBL 기반 SMILES, RDKit Morgan fingerprint, descriptors, target count
+- Strong context block: TCGA cohort, pathway, target-resolution class, drug bridge strength를 one-hot feature로 추가
+- SMILES SVD block: canonical SMILES 문자열을 character n-gram TF-IDF 후 64차원 SVD numeric feature로 추가
 - LINCS block: 약물 perturbation signature coverage가 있는 약물에 drug-level signature feature 추가
 - Pair block: drug target과 TCGA-LIHC disease signature의 overlap, LINCS reversal score
 - Split: drug 기준 GroupCV와 random CV 모두 수행
 - Final ranking: OOF prediction 기반 약물별 sensitivity score 집계 후 ADMET gate 적용
-

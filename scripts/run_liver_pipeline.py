@@ -24,6 +24,8 @@ import pandas as pd
 import torch
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Crippen, Descriptors, FilterCatalog, Lipinski, rdMolDescriptors
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import GroupKFold, KFold
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
@@ -52,10 +54,22 @@ KEY_COLUMNS = {
     "gdsc_version",
     "TCGA_DESC",
     "cohort",
+    "PATHWAY_NAME_NORMALIZED",
+    "classification",
+    "drug_bridge_strength",
+    "stage3_resolution_status",
     "canonical_smiles",
     "drug__canonical_smiles",
     "drug__target_list",
 }
+
+STRONG_CONTEXT_COLS = [
+    "TCGA_DESC",
+    "PATHWAY_NAME_NORMALIZED",
+    "classification",
+    "drug_bridge_strength",
+    "stage3_resolution_status",
+]
 
 KNOWN_LIVER_DRUGS = {
     "sorafenib",
@@ -216,6 +230,7 @@ def build_inputs(paths: PipelinePaths, args: argparse.Namespace) -> None:
     drug_features, lincs_full = build_drug_features(paths, drug_master, target_mapping, args.max_lincs_features)
     pair_features = build_pair_features(response_labels, target_mapping, disease_signature, lincs_full)
     train_table = assemble_train_table(response_labels, sample_features, drug_features, pair_features)
+    train_table, context_smiles_summary = add_strong_context_and_smiles_features(train_table, target_mapping)
     slim_table, feature_names, slim_summary = build_slim_table(train_table, args)
 
     gdsc.to_parquet(paths.standardized / "gdsc_lihc_response.parquet", index=False)
@@ -251,11 +266,15 @@ def build_inputs(paths: PipelinePaths, args: argparse.Namespace) -> None:
         "train_shape": [int(train_table.shape[0]), int(train_table.shape[1])],
         "slim_shape": [int(slim_table.shape[0]), int(slim_table.shape[1])],
         "slim_feature_count": int(len(feature_names)),
+        "strong_context_onehot_features": int(context_smiles_summary["strong_context"]["onehot_dim_for_ml"]),
+        "smiles_svd_features": int(context_smiles_summary["smiles"]["svd_dim"]),
+        "context_smiles": context_smiles_summary,
         "slim_summary": slim_summary,
     }
     write_json(paths.standardized / "source_crosswalks.json", source_summary)
     write_json(paths.model_inputs / "model_input_summary.json", source_summary)
     write_json(paths.slim_inputs / "slim_input_summary.json", source_summary)
+    write_json(paths.slim_inputs / "context_smiles_bundle_summary.json", context_smiles_summary)
 
 
 def load_gdsc(paths: PipelinePaths) -> pd.DataFrame:
@@ -663,6 +682,157 @@ def assemble_train_table(
     return train.sort_values("pair_id").reset_index(drop=True)
 
 
+def add_strong_context_and_smiles_features(
+    train: pd.DataFrame,
+    target_mapping: pd.DataFrame,
+    smiles_svd_dim: int = 64,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Add lung/BRCA-style strong context one-hot and SMILES SVD features."""
+    enriched = train.copy()
+    enriched["TCGA_DESC"] = enriched.get("TCGA_DESC", "LIHC")
+    enriched["TCGA_DESC"] = enriched["TCGA_DESC"].fillna("LIHC").astype(str).replace({"": "LIHC"})
+
+    pathway = first_existing_series(enriched, ["pathway_name", "target_pathway"], "__MISSING__")
+    enriched["PATHWAY_NAME_NORMALIZED"] = pathway.map(normalize_context_value)
+
+    target_class = build_target_resolution_class(target_mapping, enriched)
+    enriched["classification"] = enriched["canonical_drug_id"].astype(str).map(target_class).fillna("mixed_gene_and_ambiguous")
+
+    source_count = pd.Series(0, index=enriched.index, dtype=np.int16)
+    if "drug_has_valid_smiles" in enriched.columns:
+        source_count += pd.to_numeric(enriched["drug_has_valid_smiles"], errors="coerce").fillna(0).astype(int).clip(0, 1)
+    elif "drug__has_smiles" in enriched.columns:
+        source_count += pd.to_numeric(enriched["drug__has_smiles"], errors="coerce").fillna(0).astype(int).clip(0, 1)
+    if "drug__has_lincs_signature" in enriched.columns:
+        source_count += pd.to_numeric(enriched["drug__has_lincs_signature"], errors="coerce").fillna(0).astype(int).clip(0, 1)
+    if "drug__target_count" in enriched.columns:
+        source_count += (pd.to_numeric(enriched["drug__target_count"], errors="coerce").fillna(0) > 0).astype(int)
+    enriched["drug_bridge_strength"] = np.where(source_count >= 2, "multi_source", "single_source")
+    enriched["stage3_resolution_status"] = np.where(
+        enriched["classification"].eq("all_tokens_gene_matched"),
+        "resolved_or_cleaned",
+        "partial_gene_resolution_with_family_remaining",
+    )
+
+    onehot_cols: list[str] = []
+    onehot_levels: dict[str, list[str]] = {}
+    for column in STRONG_CONTEXT_COLS:
+        values = enriched[column].fillna("__MISSING__").astype(str).replace({"": "__MISSING__"})
+        levels = sorted(values.unique().tolist())
+        onehot_levels[column] = levels
+        for level in levels:
+            feature = f"ctxcat__{safe_feature_name(column)}__{safe_feature_name(level)}"
+            enriched[feature] = values.eq(level).astype(np.int8)
+            onehot_cols.append(feature)
+
+    smiles_features, smiles_summary = build_smiles_svd_features(
+        enriched[["canonical_drug_id", "drug__canonical_smiles"]].drop_duplicates("canonical_drug_id"),
+        requested_dim=smiles_svd_dim,
+    )
+    enriched = enriched.merge(smiles_features, on="canonical_drug_id", how="left")
+    smiles_cols = [c for c in smiles_features.columns if c.startswith("smiles_svd_")]
+    enriched[smiles_cols] = enriched[smiles_cols].fillna(0.0)
+
+    summary = {
+        "strong_context": {
+            "columns": STRONG_CONTEXT_COLS,
+            "onehot_dim_for_ml": int(len(onehot_cols)),
+            "onehot_columns": onehot_cols,
+            "levels": onehot_levels,
+        },
+        "smiles": smiles_summary,
+        "shape_before": [int(train.shape[0]), int(train.shape[1])],
+        "shape_after": [int(enriched.shape[0]), int(enriched.shape[1])],
+    }
+    return enriched, summary
+
+
+def build_smiles_svd_features(drug_smiles: pd.DataFrame, requested_dim: int) -> tuple[pd.DataFrame, dict[str, Any]]:
+    base = drug_smiles.copy()
+    base["canonical_drug_id"] = base["canonical_drug_id"].astype(str)
+    base["drug__canonical_smiles"] = base["drug__canonical_smiles"].fillna("").astype(str)
+    texts = base["drug__canonical_smiles"].where(base["drug__canonical_smiles"].str.strip().ne(""), "__EMPTY__")
+
+    vectorizer = TfidfVectorizer(analyzer="char", ngram_range=(2, 5), min_df=1)
+    tfidf = vectorizer.fit_transform(texts.tolist())
+    max_dim = max(1, min(tfidf.shape[0], tfidf.shape[1]) - 1)
+    dim = min(int(requested_dim), max_dim)
+    svd = TruncatedSVD(n_components=dim, random_state=42)
+    values = svd.fit_transform(tfidf).astype(np.float32)
+    svd_cols = [f"smiles_svd_{idx:02d}" for idx in range(dim)]
+    out = pd.concat(
+        [base[["canonical_drug_id"]].reset_index(drop=True), pd.DataFrame(values, columns=svd_cols)],
+        axis=1,
+    )
+    summary = {
+        "requested_dim": int(requested_dim),
+        "svd_dim": int(dim),
+        "tfidf_shape": [int(tfidf.shape[0]), int(tfidf.shape[1])],
+        "vectorizer_vocab_size": int(len(vectorizer.vocabulary_)),
+        "explained_variance_sum": float(np.sum(svd.explained_variance_ratio_)),
+        "drug_count": int(base.shape[0]),
+        "non_empty_smiles_drugs": int(base["drug__canonical_smiles"].str.strip().ne("").sum()),
+        "columns": svd_cols,
+    }
+    return out, summary
+
+
+def build_target_resolution_class(target_mapping: pd.DataFrame, train: pd.DataFrame) -> dict[str, str]:
+    mapped_tokens = (
+        target_mapping.assign(canonical_drug_id=target_mapping["canonical_drug_id"].astype(str))
+        .groupby("canonical_drug_id")["target_gene_symbol"]
+        .apply(lambda values: [str(v).strip() for v in values if str(v).strip()])
+        .to_dict()
+    )
+    raw_targets = (
+        train[["canonical_drug_id", "putative_target"]]
+        .drop_duplicates("canonical_drug_id")
+        .assign(canonical_drug_id=lambda df: df["canonical_drug_id"].astype(str))
+        if "putative_target" in train.columns
+        else pd.DataFrame(columns=["canonical_drug_id", "putative_target"])
+    )
+    raw_lookup = raw_targets.set_index("canonical_drug_id")["putative_target"].astype(str).to_dict()
+    out: dict[str, str] = {}
+    for drug_id in train["canonical_drug_id"].astype(str).unique():
+        mapped = mapped_tokens.get(drug_id, [])
+        raw = split_target_tokens(raw_lookup.get(drug_id, ""))
+        tokens = mapped or raw
+        if not tokens:
+            out[drug_id] = "mixed_gene_and_ambiguous"
+        elif all(is_gene_like(token) for token in tokens):
+            out[drug_id] = "all_tokens_gene_matched"
+        elif any(is_gene_like(token) for token in tokens):
+            out[drug_id] = "mixed_gene_and_non_gene"
+        else:
+            out[drug_id] = "mixed_gene_and_ambiguous"
+    return out
+
+
+def split_target_tokens(value: str) -> list[str]:
+    text = str(value or "").strip()
+    if not text:
+        return []
+    return [token.strip() for token in re.split(r"[|,;/]+", text) if token.strip()]
+
+
+def first_existing_series(df: pd.DataFrame, candidates: list[str], default: str) -> pd.Series:
+    result = pd.Series(default, index=df.index, dtype="object")
+    for column in candidates:
+        if column not in df.columns:
+            continue
+        values = df[column].fillna("").astype(str).str.strip()
+        result = result.where(result.astype(str).str.strip().ne(default), values)
+        result = result.where(result.astype(str).str.strip().ne(""), values)
+    return result.replace({"": default})
+
+
+def normalize_context_value(value: str) -> str:
+    text = str(value or "").strip()
+    if not text or text.lower() in {"nan", "none", "<na>", "null"}:
+        return "__MISSING__"
+    return safe_feature_name(text).upper()
+
+
 def build_slim_table(train: pd.DataFrame, args: argparse.Namespace) -> tuple[pd.DataFrame, list[str], dict[str, Any]]:
     filtered = train.copy()
     if "drug_has_valid_smiles" in filtered.columns:
@@ -672,7 +842,10 @@ def build_slim_table(train: pd.DataFrame, args: argparse.Namespace) -> tuple[pd.
     crispr_cols = [c for c in numeric_cols if c.startswith("sample__crispr__")]
     lincs_cols = [c for c in numeric_cols if c.startswith("lincs__")]
     morgan_cols = [c for c in numeric_cols if c.startswith("drug_morgan_")]
-    other_cols = [c for c in numeric_cols if c not in set(crispr_cols + lincs_cols + morgan_cols)]
+    context_cols = [c for c in numeric_cols if c.startswith("ctxcat__")]
+    smiles_svd_cols = [c for c in numeric_cols if c.startswith("smiles_svd_")]
+    grouped_cols = set(crispr_cols + lincs_cols + morgan_cols + context_cols + smiles_svd_cols)
+    other_cols = [c for c in numeric_cols if c not in grouped_cols]
 
     crispr_keep = top_variance_columns(filtered, crispr_cols, args.max_slim_crispr)
     lincs_keep = top_variance_columns(filtered, lincs_cols, args.max_slim_lincs)
@@ -680,7 +853,7 @@ def build_slim_table(train: pd.DataFrame, args: argparse.Namespace) -> tuple[pd.
     if len(morgan_keep) > 1600:
         morgan_keep = top_variance_columns(filtered, morgan_keep, 1600)
 
-    feature_names = other_cols + crispr_keep + lincs_keep + morgan_keep
+    feature_names = other_cols + context_cols + smiles_svd_cols + crispr_keep + lincs_keep + morgan_keep
     meta_cols = [
         "pair_id",
         "sample_id",
@@ -710,6 +883,8 @@ def build_slim_table(train: pd.DataFrame, args: argparse.Namespace) -> tuple[pd.
         "lincs_keep": int(len(lincs_keep)),
         "morgan_input": int(len(morgan_cols)),
         "morgan_keep": int(len(morgan_keep)),
+        "strong_context_onehot_keep": int(len(context_cols)),
+        "smiles_svd_keep": int(len(smiles_svd_cols)),
         "other_numeric_keep": int(len(other_cols)),
         "invalid_smiles_rows_removed": int(train.shape[0] - filtered.shape[0]),
     }
@@ -1252,6 +1427,8 @@ def render_markdown_report(inputs: dict[str, Any], metrics: dict[str, Any], sele
         f"- Drugs: {inputs.get('gdsc_drugs', 'NA')}",
         f"- Slim input shape: {inputs.get('slim_shape', 'NA')}",
         f"- Slim feature count: {inputs.get('slim_feature_count', 'NA')}",
+        f"- Strong-context one-hot features: {inputs.get('strong_context_onehot_features', 'NA')}",
+        f"- SMILES SVD features: {inputs.get('smiles_svd_features', 'NA')}",
         "",
         "## Model Metrics",
     ]
@@ -1333,6 +1510,8 @@ def render_html_report(inputs: dict[str, Any], metrics: dict[str, Any], selected
     <div class="card"><div class="label">Cell lines</div><div class="value">{inputs.get('gdsc_cell_lines', 'NA')}</div></div>
     <div class="card"><div class="label">Drugs</div><div class="value">{inputs.get('gdsc_drugs', 'NA')}</div></div>
     <div class="card"><div class="label">Slim features</div><div class="value">{inputs.get('slim_feature_count', 'NA')}</div></div>
+    <div class="card"><div class="label">Strong context one-hot</div><div class="value">{inputs.get('strong_context_onehot_features', 'NA')}</div></div>
+    <div class="card"><div class="label">SMILES SVD</div><div class="value">{inputs.get('smiles_svd_features', 'NA')}</div></div>
   </div>
   <h2>Model Metrics</h2>
   <table><thead><tr><th>Track</th><th>Spearman</th><th>RMSE</th></tr></thead><tbody>{metric_rows}</tbody></table>

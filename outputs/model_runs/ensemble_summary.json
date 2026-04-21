@@ -2,21 +2,21 @@
   "models": [
     {
       "model": "xgboost",
-      "spearman": 0.5091306642631893,
-      "weight": 0.34854480624198914
+      "spearman": 0.4893855204885233,
+      "weight": 0.34117257595062256
     },
     {
       "model": "lightgbm",
-      "spearman": 0.49406437777325346,
-      "weight": 0.33823060989379883
+      "spearman": 0.4784422782161368,
+      "weight": 0.3335435688495636
     },
     {
       "model": "residual_mlp",
-      "spearman": 0.4575372988628169,
-      "weight": 0.31322458386421204
+      "spearman": 0.46659433622363794,
+      "weight": 0.32528382539749146
     }
   ],
-  "spearman": 0.5269929555223536,
-  "rmse": 2.2075958340018875,
+  "spearman": 0.5158283260401216,
+  "rmse": 2.1911573081641342,
   "path": "/Users/skku_aws2_18/team4_project/lung/liver_pipline/outputs/model_runs/oof_groupcv_weighted_top3_ensemble.parquet"
 }
