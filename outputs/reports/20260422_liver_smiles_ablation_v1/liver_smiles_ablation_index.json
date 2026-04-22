@@ -1,0 +1,9 @@
+{
+  "run_id": "20260422_liver_smiles_ablation_v1",
+  "run_dir": "/Users/skku_aws2_18/team4_project/lung/liver_pipline/data/processed/liver_smiles_ablation/20260422_liver_smiles_ablation_v1",
+  "variants": {
+    "legacy_drop_smiles_baseline_4fold": "/Users/skku_aws2_18/team4_project/lung/liver_pipline/data/processed/liver_smiles_ablation/20260422_liver_smiles_ablation_v1/legacy_drop_smiles_baseline_4fold",
+    "legacy_all_drugs_zero_smiles": "/Users/skku_aws2_18/team4_project/lung/liver_pipline/data/processed/liver_smiles_ablation/20260422_liver_smiles_ablation_v1/legacy_all_drugs_zero_smiles"
+  },
+  "report": "/Users/skku_aws2_18/team4_project/lung/liver_pipline/outputs/reports/20260422_liver_smiles_ablation_v1/liver_smiles_ablation_summary.md"
+}

@@ -1,0 +1,7 @@
+variant,split,best_model,spearman,rmse
+legacy_all_drugs_zero_smiles,drug_group_4fold,weighted_top3_ensemble,0.41625,2.260748
+legacy_drop_smiles_baseline_4fold,drug_group_4fold,weighted_top3_ensemble,0.522534,2.180982
+legacy_all_drugs_zero_smiles,random_4fold,lightgbm,0.80557,1.287729
+legacy_drop_smiles_baseline_4fold,random_4fold,lightgbm,0.850179,1.149503
+legacy_all_drugs_zero_smiles,scaffold_group_4fold,weighted_top3_ensemble,0.408194,2.299949
+legacy_drop_smiles_baseline_4fold,scaffold_group_4fold,weighted_top3_ensemble,0.514456,2.251364

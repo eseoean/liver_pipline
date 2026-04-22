@@ -1,0 +1,4 @@
+split,legacy_all_drugs_zero_smiles,legacy_drop_smiles_baseline_4fold,drop_minus_zero_delta
+drug_group_4fold,0.41625,0.522534,0.106284
+random_4fold,0.80557,0.850179,0.044609
+scaffold_group_4fold,0.408194,0.514456,0.106262
